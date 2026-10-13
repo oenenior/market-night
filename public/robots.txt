@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://oenenior.github.io/market-night/sitemap.xml
