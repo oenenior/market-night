@@ -1,0 +1,49 @@
+# 매일 밤 9시(KST)에 공개판을 만들어 GitHub Pages에 올리고 텔레그램 채널에 보냅니다.
+name: publish
+on:
+  schedule:
+    - cron: "0 12 * * *"  # 12:00 UTC = 21:00 KST (GitHub 사정으로 몇 분~수십 분 늦을 수 있음)
+  workflow_dispatch:
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+concurrency:
+  group: publish
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      TZ: Asia/Seoul
+      MN_SITE_URL: ${{ vars.MN_SITE_URL }}
+      MN_TELEGRAM_URL: ${{ vars.MN_TELEGRAM_URL }}
+      MN_ADFIT_UNIT: ${{ vars.MN_ADFIT_UNIT }}
+      MN_CONTACT: ${{ vars.MN_CONTACT }}
+      TELEGRAM_CHAT_ID: ${{ vars.TELEGRAM_CHAT_ID }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Build edition
+        run: python newsboard.py --public
+      - name: Keep archive in repo
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add public
+          git commit -m "Edition $(date +%F)" || echo "no changes"
+          git push
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: public
+      - id: deploy
+        uses: actions/deploy-pages@v4
+      - name: Post to Telegram
+        run: python newsboard.py --post-telegram

@@ -1,0 +1,8 @@
+# 개인용 신문·관심종목은 공개하지 않습니다
+site/
+watchlist.json
+watch_state.json
+*.log
+tg_message.html
+__pycache__/
+.DS_Store
